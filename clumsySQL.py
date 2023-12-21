@@ -36,4 +36,31 @@ class Database:
 			except Exception as e:
 				print(f"Error creating table: {e}")
 		else:
+			print("No connection to database")
+			
+	def insert_data(self, name, age):
+		if self.connection:
+			try:
+				self.cursor.execute("""
+					INSERT INTO users (name, age) VALUES (?, ?)
+				""", (name, age))
+				self.connection.commit()
+				print("Inserted data to the table")
+			except Exception as e:
+				print(f"Error inesrting data: {e}")
+		else:
+			print("No connection to database")
+			
+	def get_data(self):
+		if self.connection:
+			try:
+				self.cursor.execute("SELECT * FROM users")
+				data = self.cursor.fetchall()
+				print("Data retrieved from the tabel")
+				for row in data:
+					print(row)
+				return data
+			except Exception as e:
+				print(f"Error retrieving data: {e}")
+		else:
 			print("No connection to database") 
