@@ -1,4 +1,11 @@
 import sqlite3
+import logging
+
+
+def print_whitespace():
+	print()
+	print()
+	print()
 
 
 class Database:
@@ -6,61 +13,68 @@ class Database:
 		self.db_name = db_name
 		self.connection = None
 		self.cursor = None
-		
+	
 	def connect(self):
 		try:
-			self.connection = sqlite3.connect(self.db_name)
-			self.cursor = self.connection.cursor()
+			with sqlite3.connect(self.db_name) as connection:
+				self.connection = connection
+				self.cursor = connection.cursor()
 			print(f"Connected to database: {self.db_name}")
-		except Exception as e:
-			print(f"Connection failed: {e}")
-			
+		except sqlite3.Error as e:
+			logging.error(f"Connection failed: {e}")
+	
 	def disconnect(self):
 		if self.connection:
 			self.connection.close()
 			print(f"Disconnected from database: {self.db_name}")
 		else:
-			print("No connection to database")
+			print("Not connected to the database.")
+	
+	def create_table(self, columns, table_name):
+		if not self.connection:
+			print("Not connected to the database. Please connect first.")
+			return
+		
+		try:
+			columns_str = ', '.join([f'{col} TEXT' if col != 'id' else f'{col} INTEGER' for col in columns])
+			query = f'CREATE TABLE IF NOT EXISTS {table_name} ({columns_str})'
+			self.cursor.execute(query)
+			print(f"Table {table_name} created successfully.")
+		except sqlite3.Error as e:
+			logging.error(f"Error creating table: {e}")
+	
+	def insert_data(self, data, table_name):
+		if not self.connection:
+			print("Not connected to the database. Please connect first.")
+			return
+		
+		try:
+			columns = ', '.join(data.keys())
+			values = ', '.join(['?' for _ in data.values()])
+			query = f'INSERT INTO users ({columns}) VALUES ({values})'
+			self.cursor.execute(query, tuple(data.values()))
+			self.connection.commit()
+			print("Inserted data into the table.")
+		except sqlite3.Error as e:
+			logging.error(f"Error inserting data: {e}")
+	
+	def get_data(self, table_name):
+		if not self.connection:
+			print("Not connected to the database. Please connect first.")
+			return
+		
+		try:
+			self.cursor.execute('SELECT * FROM sqlite_master WHERE type="table" AND name = ?', (table_name,))
+			data = self.cursor.fetchall()
+			if not data:
+				print(f"Table {table_name} does not exist.")
+				return
 			
-	def create_table(self):
-		if self.connection:
-			try:
-				self.cursor.execute("""
-					CREATE TABLE IF NOT EXISTS users (
-						id INTEGER PRIMARY KEY,
-						name TEXT,
-						age INTEGER
-					)
-				""")
-				print(f"Created table: {self.db_name}")
-			except Exception as e:
-				print(f"Error creating table: {e}")
-		else:
-			print("No connection to database")
-			
-	def insert_data(self, name, age):
-		if self.connection:
-			try:
-				self.cursor.execute("""
-					INSERT INTO users (name, age) VALUES (?, ?)
-				""", (name, age))
-				self.connection.commit()
-				print("Inserted data to the table")
-			except Exception as e:
-				print(f"Error inesrting data: {e}")
-		else:
-			print("No connection to database")
-			
-	def get_data(self):
-		if self.connection:
-			try:
-				self.cursor.execute("SELECT * FROM users")
-				data = self.cursor.fetchall()
-				print("Data retrieved from the tabel")
-				for row in data:
-					print(row)
-				return data
-			except Exception as e:
-				print(f"Error retrieving data: {e}")
-		else:
-			print("No connection to database") 
+			self.cursor.execute(f'SELECT * FROM {table_name}')
+			data = self.cursor.fetchall()
+			print("Data retrieved from the table")
+			for row in data:
+				print(row)
+			return data
+		except sqlite3.Error as e:
+			logging.error(f"Error retrieving data: {e}") 

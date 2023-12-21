@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flask Button Demo</title>
+</head>
+<body>
+    <h1>Welcome to Flask Button Demo</h1>
+
+    <form method="post" action="{{ url_for('home') }}">
+        <button type="submit" name="connect">Connect</button>
+        <button type="submit" name="get_data">get data from db</button>
+        <button type="submit" name="create_table">create an example table</button>
+        <button type="submit" name="disconnect">disconnect</button>
+    </form> 
+
+
+</body>
+</html>
